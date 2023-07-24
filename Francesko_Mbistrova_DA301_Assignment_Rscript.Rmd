@@ -1,0 +1,232 @@
+## **Week - 1**
+
+```{r}
+# Week 1 - Linear Regression for Accumulating Loyalty Points
+library(readr)
+# Step 1: Load the dataset\
+
+turtle_sales <- read_csv("turtle_sales.csv")
+
+# Step 2: Create, fit, and determine the accuracy of a regression model
+loyalty_model <- lm(Global_Sales ~ NA_Sales + EU_Sales, data = turtle_sales)
+summary(loyalty_model)
+
+# Step 3: Visualize the regression model
+plot(turtle_sales$NA_Sales, turtle_sales$Global_Sales, main = "Linear Regression - Global Sales vs. NA Sales", 
+     xlab = "NA Sales", ylab = "Global Sales")
+abline(loyalty_model, col = "red")
+```
+
+## **Week - 2**
+
+```{r}
+
+# Step 1: Importing the dataset
+turtle_reviews <- read_csv("turtle_reviews.csv")
+
+
+
+# Step 2: Import necessary libraries (if not already installed)
+library(tidyverse)
+
+# Step 3: Prepare the data for clustering
+# We will use remuneration and spending_score for clustering
+X <- turtle_reviews[, c("remuneration", "spending_score")]
+
+# Step 4: Perform k-means clustering
+k <- 3  # Number of clusters (you can adjust this as needed)
+set.seed(42)  # For reproducibility
+kmeans_model <- kmeans(X, centers = k)
+
+# Step 5: Get the cluster assignments
+cluster_labels <- kmeans_model$cluster
+
+# Step 6: Add the cluster labels to the original dataset
+turtle_reviews$cluster <- factor(cluster_labels)
+
+# Step 7: Visualize the clusters
+ggplot(turtle_reviews, aes(x = remuneration, y = spending_score, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering of Remuneration vs. Spending Score",
+       x = "Remuneration", y = "Spending Score") +
+  theme_minimal()
+
+
+```
+
+## **Week - 3**
+
+```{r}
+# Step 1: Importing the dataset
+
+turtle_reviews <- read_csv("turtle_reviews.csv")
+
+# Step 2: Import necessary libraries (if not already installed)
+
+library(tidyverse)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+library(Matrix)  
+# Step 3: Perform NLP
+# Preprocess the review text - remove punctuation, numbers, and convert to lowercase
+clean_reviews <- tm_map(Corpus(VectorSource(turtle_reviews$review)), content_transformer(tolower))
+clean_reviews <- tm_map(clean_reviews, removePunctuation)
+clean_reviews <- tm_map(clean_reviews, removeNumbers)
+
+# Remove common stopwords and custom stopwords specific to DM screen reviews
+custom_stopwords <- c("dm", "screen", "screens", "use", "useless", "waste", "wasted", "wasting", "stop", "making", "crap")
+clean_reviews <- tm_map(clean_reviews, removeWords, c(stopwords("english"), custom_stopwords))
+
+# Create a document-term matrix
+dtm <- DocumentTermMatrix(clean_reviews)
+
+# Get the 15 most common words in the reviews
+word_freq <- rowSums(as.matrix(dtm))
+top_15_words <- head(sort(word_freq, decreasing = TRUE), 15)
+
+# Get the top 20 positive and negative reviews
+positive_reviews <- turtle_reviews[order(turtle_reviews$loyalty_points, decreasing = TRUE), ][1:20, "review"]
+negative_reviews <- turtle_reviews[order(turtle_reviews$loyalty_points), ][1:20, "review"]
+
+# Step 4: Generate Word Clouds for top positive and negative reviews
+wordcloud(words = names(top_15_words), freq = top_15_words, min.freq = 1,
+          max.words = 15, random.order = FALSE, colors = brewer.pal(8, "Dark2"))
+
+# Step 5: Print top 20 positive and negative reviews
+cat("Top 20 Positive Reviews:\n")
+for (i in seq_along(positive_reviews)) {
+  cat(i, ":", positive_reviews[[i]], "\n")
+}
+
+cat("\nTop 20 Negative Reviews:\n")
+for (i in seq_along(negative_reviews)) {
+  cat(i, ":", negative_reviews[[i]], "\n")
+}
+```
+
+## **Week - 4**
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Step 1: Explore the dataset and prepare for visualization
+# For this step, we will use the "Global_Sales" variable as the indicator of the impact of sales per product
+
+# Step 2: Create visualizations
+# Visualization 1: Bar chart to show Global Sales per Product
+ggplot(turtle_sales, aes(x = Product, y = Global_Sales)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Global Sales per Product",
+       x = "Product",
+       y = "Global Sales") +
+  theme_minimal()
+
+# Visualization 2: Scatter plot to show the relationship between NA Sales and EU Sales
+ggplot(turtle_sales, aes(x = NA_Sales, y = EU_Sales, color = Product)) +
+  geom_point(size = 3) +
+  labs(title = "Relationship between NA Sales and EU Sales",
+       x = "NA Sales",
+       y = "EU Sales") +
+  theme_minimal()
+
+# Visualization 3: Line chart to show the trend of Global Sales over the years
+ggplot(turtle_sales, aes(x = Year, y = Global_Sales, group = 1)) +
+  geom_line(color = "steelblue") +
+  geom_point(color = "steelblue", size = 3) +
+  labs(title = "Trend of Global Sales over the Years",
+       x = "Year",
+       y = "Global Sales") +
+  theme_minimal()
+
+```
+
+## **Week - 5**
+
+```{r}
+# Step 1: Import necessary libraries (if not already installed)
+
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(rlang)
+library(psych)
+
+# Step 2: Data Cleaning and Manipulation
+# No specific data cleaning or manipulation is required for this dataset as it is already clean and ready for analysis.
+
+# Step 3: Data Cleaning and Manipulation
+# No specific data cleaning or manipulation is required for this dataset as it is already clean and ready for analysis.
+
+# Step 4: Data Distribution Analysis
+# We will analyze the data distribution, check for normality, skewness, and kurtosis for each numerical variable.
+
+# Function to generate distribution plots and statistics
+analyze_distribution <- function(data, variable) {
+  # Distribution plot
+  ggplot(data, aes(x = !!sym(variable))) +
+    geom_histogram(binwidth = 5, fill = "steelblue", color = "white") +
+    labs(title = paste("Distribution of", variable),
+         x = variable,
+         y = "Frequency") +
+    theme_minimal()
+  
+  # Shapiro-Wilk test for normality
+  shapiro_test <- shapiro.test(data[[variable]])
+  cat(paste("Shapiro-Wilk test for normality -", variable, ":", shapiro_test$p.value, "\n"))
+  
+  # Skewness and Kurtosis
+  desc_stats <- describe(data[[variable]])
+  cat(paste("Skewness -", variable, ":", desc_stats$skewness, "\n"))
+  cat(paste("Kurtosis -", variable, ":", desc_stats$kurtosis, "\n\n"))
+}
+
+# Analyze distribution for each numerical variable
+for (var in c("NA_Sales", "EU_Sales", "Global_Sales")) {
+  analyze_distribution(turtle_sales, var)
+}
+
+```
+
+## **Week - 6**
+
+```{r}
+# Step 2: Import necessary libraries (if not already installed)
+install.packages("ggplot2")
+install.packages("dplyr")
+
+library(ggplot2)
+library(dplyr)
+
+# Step 3: Perform Regression Analysis
+# We will apply linear regression to analyze the relationship between North America (NA) Sales, Europe (EU) Sales, and Global Sales.
+
+# Fit the linear regression model
+lm_model <- lm(Global_Sales ~ NA_Sales + EU_Sales, data = turtle_sales)
+
+# Step 4: Analyze the regression model
+# Get the summary of the regression model
+summary(lm_model)
+
+# Step 5: Visualize the regression model
+# Visualization 1: Scatter plot with regression line
+ggplot(turtle_sales, aes(x = NA_Sales, y = Global_Sales)) +
+  geom_point(color = "steelblue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Scatter plot with Regression Line",
+       x = "NA Sales",
+       y = "Global Sales") +
+  theme_minimal()
+
+# Visualization 2: Scatter plot with regression line
+ggplot(turtle_sales, aes(x = EU_Sales, y = Global_Sales)) +
+  geom_point(color = "steelblue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Scatter plot with Regression Line",
+       x = "EU Sales",
+       y = "Global Sales") +
+  theme_minimal()
+```
